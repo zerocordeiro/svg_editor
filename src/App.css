@@ -51,7 +51,25 @@ p {
   justify-content:flex-start;
   align-items:flex-start;
 }
-#elementList {
+#elementList, #propertiesList {
   display:flex;
   flex-direction:column;
+  align-items:flex-start;
+  padding:1em;
+  ul, li{
+    text-align:left;
+    list-style: none;
+    padding-inline-start: 0;
+  }
+}
+.ruleSetter {
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  margin-bottom:0.2rem;
+
+  label {
+    font-size: 0.8rem; margin-right: 0.2rem;
+  }
+
 }
