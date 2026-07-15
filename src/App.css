@@ -16,11 +16,9 @@
 body {
   margin: 0;
 }
-
 p {
   margin: 0;
 }
-
 
 .flexrow{
   display:flex;
@@ -52,4 +50,8 @@ p {
   flex-direction:column;
   justify-content:flex-start;
   align-items:flex-start;
+}
+#elementList {
+  display:flex;
+  flex-direction:column;
 }
