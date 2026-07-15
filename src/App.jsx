@@ -68,6 +68,7 @@ function App() {
   const [selectedEl, setSelectedEl] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [svgElements, setSvgElements] = useState({}); // Store controllers for each element by their ID
+    const [svgStyles, setSvgStyles] = useState([]);
 
   // this will set a "global" variable that will "point" to the element that is being edited currently. It will be used by another function that will call the respective controller for the element.
   function selectElement(elId) {
@@ -93,6 +94,21 @@ function App() {
       }
     });
     setIsPlaying(!isPlaying);
+  }
+
+    function toggleStyle(id) {
+    const updated = svgStyles.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r);
+    setSvgStyles(updated);
+  
+    // Group rules back by sheet and rewrite each style element
+    const styleEls = document.querySelectorAll('#svgView style');
+    styleEls.forEach((styleEl, sheetIdx) => {
+      const sheetRules = updated.filter(r => r.sheetIdx === sheetIdx);
+      styleEl.innerHTML = sheetRules
+        .filter(r => r.enabled)
+        .map(r => r.cssText)
+        .join('\n');
+    });
   }
 
   async function handleFileChange(event) {
@@ -206,6 +222,24 @@ selectElement(elementData.id);
       setSvgDoc(svgParsed);
       console.log('svg contents:', svgParsed);
       svgView.innerHTML = svgParsed.documentElement.outerHTML;
+    
+      // Read rules AFTER injection so .sheet is available
+      const rules = [];
+      svgView.querySelectorAll('style').forEach((styleEl, sheetIdx) => {
+        const sheet = styleEl.sheet;
+        if (!sheet) return;
+        Array.from(sheet.cssRules).forEach((rule, ruleIdx) => {
+          rules.push({
+            id: `${sheetIdx}-${ruleIdx}`,
+            label: rule.selectorText || '@rule',
+            cssText: rule.cssText,
+            enabled: true,
+            sheetIdx,
+            ruleIdx
+          });
+        });
+      });
+      setSvgStyles(rules);
 
       return false;
     }
@@ -234,6 +268,20 @@ selectElement(elementData.id);
             Properties List
             <button id="playBtn" onClick={handlePlay}>{isPlaying ? 'Pause' : 'Play'}</button>
             <button id="changeStrokeBtn" onClick={changeStroke}>Change Stroke</button>
+            <ul>
+    {svgStyles.map(rule => (
+      <li key={rule.id}>
+        <label>
+          <input
+            type="checkbox"
+            checked={rule.enabled}
+            onChange={() => toggleStyle(rule.id)}
+          />
+          {rule.label}
+        </label>
+      </li>
+    ))}
+  </ul>
           </div>
         </div>
         {/* <div id="timelineContainer">
