@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import './App.css'
 import traverseElements from './assets/js/traverseElements.js';
 
@@ -11,11 +11,25 @@ function App() {
   const [svgDoc, setSvgDoc] = useState(null);
   const [svgControllers, setSvgControllers] = useState({});
   const [selectedEl, setSelectedEl] = useState(null);
+
+  const selectedElRef = useRef(null);
+  const svgControllersRef = useRef({});
+
+  const registerSvgController = useCallback((id, controller) => {
+    svgControllersRef.current[id] = controller; // sync immediately
+    setSvgControllers(prev => ({ ...prev, [id]: controller }));
+  }, []);
   
   const [svgStyles, setSvgStyles] = useState([]);
 
   // this will set a "global" variable that will "point" to the element that is being edited currently. It will be used by another function that will call the respective controller for the element.
   function selectElement(elId) {
+    const buttonsContainer = document.getElementById('svgContents');
+    buttonsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('selectedButton'));
+    const selectedButton = buttonsContainer.querySelector(`button[data-elid="${elId}"]`);
+    selectedButton && selectedButton.classList.add('selectedButton');
+    selectedElRef.current = elId; // sync immediately
+
     setSelectedEl(elId);
     console.log('selected element: ', elId);
     const svgView = document.getElementById('svgView');
@@ -51,20 +65,38 @@ function App() {
               )
             }
 
-  function changeRules() {
-    console.log('svgControllers: ', svgControllers);
-    const ruleInputStrokeWidth = document.getElementById('ruleInputStrokeWidth').value;
-    const ruleInputStrokeColor = document.getElementById('ruleInputStrokeColor').value;
-    console.log('ruleInputStrokeWidth: ', ruleInputStrokeWidth);
-    console.log('ruleInputStrokeColor: ', ruleInputStrokeColor);
+  async function changeRules() {
+    // console.log('svgControllers: ', svgControllers);
 
-    if (selectedEl && svgControllers[selectedEl]) {
-      const myElementController = svgControllers[selectedEl];
-      myElementController.changeCssRules();
+    const currentElId = selectedElRef.current;
+    const controller = currentElId ? svgControllersRef.current[currentElId] : null;
 
-    } else {
-      alert('No element selected or element controller not found.');
+    console.log('currentElId: ', currentElId);
+    console.log('controller: ', controller);
+
+    if (!currentElId || !controller) {
+      alert('No element selected or controller not ready.');
+      return;
     }
+
+
+    const rulesToApply = {};
+    
+    rulesArray.forEach((rule) => {
+      const input = document.getElementById(rule.inputId);
+      if (!input) return;
+
+      const value = input.value;
+      if (value !== '') rulesToApply[rule.rule] = value;
+    });
+
+    if (Object.keys(rulesToApply).length === 0) {
+      alert('No rules to apply. Please set at least one rule value.');
+      return;
+    }
+    
+    controller.changeCssRules(rulesArray, rulesToApply);
+
   }
     function handlePlay() {
     document.querySelectorAll('#svgView *').forEach(el => {
@@ -103,6 +135,11 @@ function App() {
   async function handleFileChange(event) {
     const svgView = document.getElementById('svgView');
     // this will check the uploaded file and first see if it is a SVG. If it isn't, it will alert the user that the file is not a SVG and end the execution. If it is a SVG, it will alert the user that the file has been changed.
+
+    // reset controllers  before rebuilding controllers
+    svgControllersRef.current = {};
+    setSvgControllers({});
+
     const file = event.target.files[0];
     if (file && file.type === 'image/svg+xml') {
       // alert('File changed');
@@ -153,9 +190,8 @@ function App() {
             attributes: Object.keys(element.attributes)
           });
         }
-            document.querySelector('#svgContents').innerHTML = '';
 
-        svgStructureArray.push(traverseElements(element,setSvgControllers,selectElement));
+        svgStructureArray.push(traverseElements(element,registerSvgController,selectElement));
 
       });
 

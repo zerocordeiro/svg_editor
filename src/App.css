@@ -74,5 +74,9 @@ p {
 
 }
 .selectedSvgElement{
-  outline: 2px solid red;
+  outline: 2px solid #ee3434bb;
+  outline-offset:3px;
+}
+.selectedButton{
+  background-color: #dede11;
 }
