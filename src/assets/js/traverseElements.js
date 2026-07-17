@@ -95,25 +95,13 @@ async function traverseElements(element, setSvgControllers, selectElement) {
     const elementData = {};
     const currentDate = await new Date().getTime();
 
-    elementData.tag = element.tagName;
+    elementData['tag'] = element.tagName;
     elementData.id = element.id ? element.id : currentDate;
-    elementData.classList = Array.from(element.classList);
+    elementData['classList'] = Array.from(element.classList);
     elementData.children = [];
     for (const child of Array.from(element.children)) {
-        if (child.tagName === 'g') {
             // console.log('group found: ', child);
             elementData.children.push(await traverseElements(child, setSvgControllers, selectElement)); // Recursively traverse child elements
-
-        } else {
-            // console.log('element found: ', child);
-            elementData.children.push({
-                tag: child.tagName,
-                id: child.id ? child.id : currentDate,
-                classList: Array.from(child.classList),
-                children: []
-            });
-            // document.querySelector('#svgContentsList').innerHTML += `<li>Element: ${child.tagName}, ID: ${child.id ? child.id : 'noId'}, Classes: ${Array.from(child.classList).join(', ')}</li>`;
-        }
     }
     const myController = new svgElementController(element, elementData.id);
     myController.init();

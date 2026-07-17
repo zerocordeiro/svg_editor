@@ -53,8 +53,8 @@ function App() {
 
   function changeRules() {
     console.log('svgControllers: ', svgControllers);
-    ruleInputStrokeWidth = document.getElementById('ruleInputStrokeWidth').value;
-    ruleInputStrokeColor = document.getElementById('ruleInputStrokeColor').value;
+    const ruleInputStrokeWidth = document.getElementById('ruleInputStrokeWidth').value;
+    const ruleInputStrokeColor = document.getElementById('ruleInputStrokeColor').value;
     console.log('ruleInputStrokeWidth: ', ruleInputStrokeWidth);
     console.log('ruleInputStrokeColor: ', ruleInputStrokeColor);
 
