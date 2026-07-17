@@ -92,3 +92,11 @@ p {
     overflow: hidden;
   }
 }
+.ruleBox{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  margin-bottom:0.5rem;
+  background-color: #f0f0f0;
+  padding:0.5rem;
+}

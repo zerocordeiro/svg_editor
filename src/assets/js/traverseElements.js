@@ -1,16 +1,17 @@
 class svgElementController {
     // class that will be used to make an individual controller for each element and group of the SVG. This class will carry methods that will be used to edit properties of the elements and groups, as well as methods to add and remove elements and groups. It will also have a method to get the properties of the element or group.
-    constructor(element, elId) {
+    constructor(elId) {
 
+        this.elId = elId;
+        this.keyframes = [];
+
+        /**
         this.element = element;
-        //this.button = document.createElement('button');
+        
         this.element.id = elId;
         this.element.dataAnimId = elId;
         this.element.classList = this.element.classList ? this.element.classList : [];
-        //this.button.innerHTML = `${this.element.tagName} - ID: ${elId ? elId : 'noId'}`;
-        //this.button.addEventListener('click', () => {
-        //  this.changeStroke();
-        //});
+        
         this.keyframes = [
             {time:0, transformRotate:0, transformTranslate:0, strokeWidth:10, strokeColor:'black'}, 
             {time:25, transformRotate:10, transformTranslate:10, strokeWidth:20, strokeColor:'red'}, 
@@ -18,7 +19,7 @@ class svgElementController {
             {time:75, transformRotate:30, transformTranslate:-10, strokeWidth:20, strokeColor:'green'}, 
             {time:100, transformRotate:0, transformTranslate:0, strokeWidth:1, strokeColor:'black'}
         ]; 
-        this.keyframes=[];
+        this.keyframes=[]; */
         /** example keyframes, to test how the building will work. the keyframes need to be updated every time a new time is added to the animation. By keeping the values inside the controller, we can go through all of them every time we need to update the animation. 
         The keyframes will be used to build the css rules for the element or group. The keyframes will be an array of objects with the following structure: 
             {time: number, 
@@ -52,57 +53,38 @@ class svgElementController {
     }
     
 
-    changeCssRules(rulesArray, rulesToApply) {
-        const liveEl = document.getElementById(this.element.id);
-            if (liveEl) {
-                this.element = liveEl;
-            }
-
-        // rulesArray is an Array of objects, each one containing a rule to be applied. Rules to Apply is an object like a dictionary, with the rule name as the key and the value to be applied as the value. For example: rulesToApply = {strokeWidth: 5, strokeColor: 'red'}. The rulesArray will be an array of objects with the following structure: {rule: 'strokeWidth', inputId: 'ruleInputStrokeWidth'}, {rule: 'strokeColor', inputId: 'ruleInputStrokeColor'}. The inputId is the id of the input element that will be used to get the value to be applied. The rule is the name of the rule that will be applied. The rulesArray will be used to get the values from the inputs and apply them to the element or group.
-        rulesArray.forEach(rule => {
-            const value = rulesToApply[rule.rule];
-            if (value !== undefined && value !== '') {
-                this.element.style.setProperty(rule.rule, value); // reliable for stroke-width
-                console.log(`Rule ${rule.rule} applied with value: ${value}`);
-            }
+    changeCssRules(targetEl, rulesToApply) {
+        if (!targetEl) return;
+        Object.entries(rulesToApply).forEach(([rule, value]) => {
+            if (value !== '' && rule !== 'transform') targetEl.style.setProperty(rule, value);
         });
-        
-        !this.element.querySelector('style') && this.element.appendChild(document.createElement('style'));
-        const elStyle = this.element.querySelector('style');
 
-        // get the classlist array for this element and make a string with all the classes separated by a dot, so we can use it as a selector in the css. If the element has no classes, we will use just the id as a selector.
-        const elClasses = this.element.classList.length > 0 ? '.' + Array.from(this.element.classList).join('.') : '';
+        let elStyle = targetEl.querySelector(':scope > style');
+        if (!elStyle) {
+            elStyle = document.createElement('style');
+            targetEl.appendChild(elStyle);
+        }
 
-        const elAnimCss = `#${this.element.id}${elClasses} { 
-            animation-name: ${this.element.id}_anim;
+        const elClasses = targetEl.classList.length > 0
+            ? '.' + Array.from(targetEl.classList).join('.')
+            : '';
+
+        const elAnimCss = `#${targetEl.id}${elClasses} {
+            animation-name: ${targetEl.id}_anim;
             transform-origin: center;
             animation-duration: 5s;
             animation-timing-function: linear;
             animation-iteration-count: 1;
             animation-play-state: running;
-            }
-            @keyframes ${this.element.id}_anim {
-                ${this.keyframes.map(keyframe => `
-                ${keyframe.time}% {
-                    transform: rotate(${keyframe.transformRotate}deg) translate(${keyframe.transformTranslate}px);
-                    stroke-width: ${keyframe.strokeWidth}px;
-                    stroke: ${keyframe.strokeColor};
-                }`).join('')}
-            }`;
+        }`;
+
         elStyle.type = 'text/css';
         elStyle.innerHTML = elAnimCss;
-
-        // if (elStyle.styleSheet) {
-        //     elStyle.styleSheet.cssText = elAnimCss;
-        // } else {
-        //     elStyle.appendChild(document.createTextNode(elAnimCss));
-        // }
-
-        //this.element.setAttribute('stroke', 'red');
-        //this.element.setAttribute('stroke-width', '2px');
     }
+            
 }
 let elCounter = 0;
+
 function traverseElements(element, registerSvgController) {
     const elementData = {
         tag: element.tagName,
@@ -121,7 +103,7 @@ function traverseElements(element, registerSvgController) {
         elementData.children.push(traverseElements(child, registerSvgController));
     }
 
-    const myController = new svgElementController(element, elementData.id);
+    const myController = new svgElementController(elementData.id);
     myController.init();
     registerSvgController(elementData.id, myController);
 
