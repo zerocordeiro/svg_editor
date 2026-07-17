@@ -9,25 +9,63 @@ function App() {
   // const [svgFile, setSvgFile] = useState(null);
   // we also need an object that will store the svg structure, as in an object that will represent the svg structure, so we can manipulate it later on.
   const [svgDoc, setSvgDoc] = useState(null);
+  
   const [svgControllers, setSvgControllers] = useState({});
   const [selectedEl, setSelectedEl] = useState(null);
+  
+  const [svgTree, setSvgTree] = useState([]);
+
 
   const selectedElRef = useRef(null);
   const svgControllersRef = useRef({});
 
   const registerSvgController = useCallback((id, controller) => {
     svgControllersRef.current[id] = controller; // sync immediately
-    setSvgControllers(prev => ({ ...prev, [id]: controller }));
   }, []);
+
+  const [ruleState, setRuleState] = useState({
+  'stroke-width': { enabled: true, value: '' },
+  'stroke': { enabled: true, value: '#000000' }
+});
+
+function updateRule(ruleName, patch) {
+  setRuleState(prev => ({
+    ...prev,
+    [ruleName]: { ...prev[ruleName], ...patch }
+  }));
+}
   
   const [svgStyles, setSvgStyles] = useState([]);
+  function toggleCollapsedUl(event){
+    if (event.target !== event.currentTarget) return;
+    console.log('toggled collapse in: ', event.currentTarget);
 
+    event.currentTarget.classList.toggle('collapsed');
+  }
+  function TreeNode({ node, level = 0 }) {
+    return (
+      <li>
+        <button
+          data-elid={node.id}
+          className={selectedEl === node.id ? 'selectedButton' : ''}
+          onClick={() => selectElement(node.id)}
+          style={{ marginLeft: `${level * 12}px`}}
+        >
+          {node.tag}: {node.id}
+        </button>
+  
+        {node.children?.length > 0 && (
+          <ul className="collapsableList" >
+            {node.children.map(child => (
+              <TreeNode key={child.id} node={child} level={level + 1} />
+            ))}
+          </ul>
+        )}
+      </li>
+    );
+  }
   // this will set a "global" variable that will "point" to the element that is being edited currently. It will be used by another function that will call the respective controller for the element.
   function selectElement(elId) {
-    const buttonsContainer = document.getElementById('svgContents');
-    buttonsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('selectedButton'));
-    const selectedButton = buttonsContainer.querySelector(`button[data-elid="${elId}"]`);
-    selectedButton && selectedButton.classList.add('selectedButton');
     selectedElRef.current = elId; // sync immediately
 
     setSelectedEl(elId);
@@ -163,8 +201,6 @@ function App() {
       let groups = [];
       let elements = [];
 
-      document.querySelector('#svgContents').innerHTML = ''; // Clear the contents before adding new elements
-
       const svgStyle = svgParsed.querySelector('style');
       console.log('SVG style: ', svgStyle);
 
@@ -174,8 +210,10 @@ function App() {
 
       let svgStructureArray = [];
 
-      // Traverse through all SVG elements
       Array.from(svgParsed.querySelectorAll('svg > *')).forEach(element => {
+        svgStructureArray.push(traverseElements(element, registerSvgController));
+
+        // These IFs are just to get the groups and elements arrays, which may be used for the groups and elements
         if (element.tagName === 'g') { // Groups are <g> tags
           // console.log('group found: ', element);
           groups.push({
@@ -190,10 +228,10 @@ function App() {
             attributes: Object.keys(element.attributes)
           });
         }
-
-        svgStructureArray.push(traverseElements(element,registerSvgController,selectElement));
-
       });
+
+      setSvgTree(svgStructureArray);
+      // Traverse through all SVG elements
 
       // You can now work with the groups and elements arrays
       console.log('groups: ', groups);
@@ -235,7 +273,11 @@ function App() {
           <div id="elementList">
             Element List
             <span id="svgContents">
-
+              <ul>
+                {svgTree.map(node => (
+                  <TreeNode key={node.id} node={node} />
+                ))}
+              </ul>
             </span>
           </div>
           <div id="SVGDisplay">

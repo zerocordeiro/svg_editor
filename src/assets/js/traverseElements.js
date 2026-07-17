@@ -103,37 +103,26 @@ class svgElementController {
     }
 }
 let elCounter = 0;
-function traverseElements(element, registerSvgController, selectElement) {
-    const elementData = {};
+function traverseElements(element, registerSvgController) {
+    const elementData = {
+        tag: element.tagName,
+        id: element.id ? element.id : `el_${element.tagName.toLowerCase()}_${elCounter++}`,
+        classList: Array.from(element.classList),
+        children: []
+    };
     //const currentDate = await new Date().getTime();
 
-    elementData['tag'] = element.tagName;
-    elementData.id = element.id ? element.id : `el_${element.tagName.toLowerCase()}_${elCounter++}`;
-    if(!element.id) {
-        element.id = elementData.id; // Assign a unique ID if it doesn't have one
+    
+    if (!element.id) {
+        element.id = elementData.id;
     }
-    elementData['classList'] = Array.from(element.classList);
-    elementData.children = [];
+
     for (const child of Array.from(element.children)) {
-            // console.log('group found: ', child);
-            elementData.children.push(traverseElements(child, registerSvgController, selectElement)); // Recursively traverse child elements
+        elementData.children.push(traverseElements(child, registerSvgController));
     }
+
     const myController = new svgElementController(element, elementData.id);
     myController.init();
-
-    const elBtn = document.createElement('button');
-    elBtn.setAttribute('data-elId', elementData.id);
-
-    elBtn.innerHTML = `${elementData.tag}: ${elementData.id}`;
-
-    document.querySelector('#svgContents').appendChild(elBtn);
-    console.log('added a button for element: ', elementData.id);
-
-    elBtn.addEventListener('click', () => {
-        selectElement(elementData.id);
-    })
-    console.log('🕵️ myController: ', myController);
-
     registerSvgController(elementData.id, myController);
 
     return elementData;
