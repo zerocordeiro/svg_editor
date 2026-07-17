@@ -18,6 +18,10 @@ function App() {
   function selectElement(elId) {
     setSelectedEl(elId);
     console.log('selected element: ', elId);
+    const svgView = document.getElementById('svgView');
+    svgView.querySelectorAll('.selectedSvgElement').forEach(el => el.classList.remove('selectedSvgElement'));
+    const selectedElement = svgView.querySelector(`#${elId}`);
+    selectedElement && selectedElement.classList.add('selectedSvgElement');
 
   }
 
@@ -42,7 +46,7 @@ function App() {
             function RuleInputs({ rule }) {
               return (
                 <span className="ruleSetter">
-              <input type={rule.inputType} className="ruleToggle" checked/> <label htmlFor={rule.inputId}>{rule.inputLabel}:</label> <input type={rule.valueType} id={rule.inputId} className="ruleInput"/>
+              <input type={rule.inputType} className="ruleToggle" defaultChecked/> <label htmlFor={rule.inputId}>{rule.inputLabel}:</label> <input type={rule.valueType} id={rule.inputId} className="ruleInput"/>
             </span>
               )
             }
@@ -149,7 +153,7 @@ function App() {
             attributes: Object.keys(element.attributes)
           });
         }
-            document.querySelector('#elementList').innerHTML = '';;
+            document.querySelector('#svgContents').innerHTML = '';
 
         svgStructureArray.push(traverseElements(element,setSvgControllers,selectElement));
 

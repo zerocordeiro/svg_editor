@@ -119,11 +119,11 @@ async function traverseElements(element, setSvgControllers, selectElement) {
     myController.init();
 
     const elBtn = document.createElement('button');
-    elBtn.setAttribute('da-elId', elementData.id);
+    elBtn.setAttribute('data-elId', elementData.id);
 
-    elBtn.innerHTML = `${elementData.id}`;
+    elBtn.innerHTML = `${elementData.tag}: ${elementData.id}`;
 
-    document.querySelector('#elementList').appendChild(elBtn);
+    document.querySelector('#svgContents').appendChild(elBtn);
 
     elBtn.addEventListener('click', () => {
         selectElement(elementData.id);
