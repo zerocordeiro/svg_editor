@@ -1,7 +1,59 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import './App.css'
 import traverseElements from './assets/js/traverseElements.js';
 
+
+const RULES_CONFIG = [
+  {
+    inputId: "ruleInputStrokeWidth",
+    inputLabel: "Stroke Width",
+    valueType: "number",
+    rule: "stroke-width",
+    inputToggle: "ruleToggleStrokeWidth"
+  },
+  {
+    inputId: "ruleInputStrokeColor",
+    inputLabel: "Stroke Color",
+    valueType: "color",
+    rule: "stroke",
+    inputToggle: "ruleToggleStrokeColor"
+  },
+  {
+    inputId: "ruleInputOpacity",
+    inputLabel: "Opacity",
+    valueType: "number",
+    otherProps: { min: 0, max: 1, step: 0.05 },
+    rule: "opacity",
+    inputToggle: "ruleToggleOpacity"
+  },
+  {
+    rule: "transform",
+    label: "Transform",
+    inputs: [
+      {
+        inputId: "ruleInputTranslateX",
+        inputLabel: "Translate X (px)",
+        valueType: "number",
+        rule: "translateX",
+        inputToggle: "ruleToggleTranslateX"
+      },
+      {
+        inputId: "ruleInputTranslateY",
+        inputLabel: "Translate Y (px)",
+        valueType: "number",
+        rule: "translateY",
+        inputToggle: "ruleToggleTranslateY"
+      },
+      {
+        inputId: "ruleInputRotate",
+        inputLabel: "Rotate (deg)",
+        valueType: "number",
+        rule: "rotate",
+        inputToggle: "ruleToggleRotate"
+      }
+    ]
+  }
+];
 
 function TreeNode({ node, level = 0 ,selectedEl, onSelect}) {
     return (
@@ -56,6 +108,26 @@ function TreeNode({ node, level = 0 ,selectedEl, onSelect}) {
     )
   }
 
+    // ...existing code...
+  function applyStylesToDom(stylesMap) {
+    const svgView = document.getElementById('svgView');
+    if (!svgView) return;
+  
+    // We use Object.entries next, which will return an array of [key, value] pairs from the stylesMap object. We then iterate over this array using forEach.
+    // For each pair, we destructure it into elId (the key) and rules (the value). We then use querySelector to find the target element in the DOM by its ID. If the element is found, we iterate over the rules object and apply each CSS rule to the target element using setProperty.
+    Object.entries(stylesMap).forEach(([elId, rules]) => {
+      const targetEl = svgView.querySelector(`#${CSS.escape(elId)}`); //CSS.escape() makes the string safe to use with the selector
+      if (!targetEl) return;
+  
+      Object.entries(rules).forEach(([rule, value]) => {
+        if (value !== '') {
+          targetEl.style.setProperty(rule, value);
+        }
+      });
+    });
+  }
+  // ...existing code...
+
 function App() {
   // we need an object in which to store the SVG file
   // const [svgFile, setSvgFile] = useState(null);
@@ -66,19 +138,24 @@ function App() {
 
   const [svgTree, setSvgTree] = useState([]);
 
+  const [stylesByElementId, setStylesByElementId] = useState({});
+
+  const [keyframes, setKeyframes] = useState({
+    // { [elementId]: [{ frame: 0, styles: {...} }, { frame: 30, styles: {...} }] }
+  });
+  const [currentFrame, setCurrentFrame] = useState(0);
+
 
   const selectedElRef = useRef(null);
-  const svgControllersRef = useRef({});
-
-  const registerSvgController = useCallback((id, controller) => {
-    svgControllersRef.current[id] = controller; // sync immediately
-  }, []);
 
   const [ruleState, setRuleState] = useState({
     'stroke-width': { enabled: true, value: '' },
     'stroke': { enabled: true, value: '#000000' },
     'opacity': { enabled: true, value: '1' },
     'transform': { enabled: true, value: '' },
+    'translateX': { enabled: true, value: '0' },
+    'translateY': { enabled: true, value: '0' },
+    'rotate': { enabled: true, value: '0' }
   });
 
   function updateRule(ruleName, patch) {
@@ -102,106 +179,40 @@ function App() {
 
     setSelectedEl(elId);
     console.log('selected element: ', elId);
-    const svgView = document.getElementById('svgView');
-    svgView.querySelectorAll('.selectedSvgElement').forEach(el => el.classList.remove('selectedSvgElement'));
-    const selectedElement = svgView.querySelector(`#${elId}`);
-    selectedElement && selectedElement.classList.add('selectedSvgElement');
+    // const svgView = document.getElementById('svgView');
+    // svgView.querySelectorAll('.selectedSvgElement').forEach(el => el.classList.remove('selectedSvgElement'));
+    // const selectedElement = svgView.querySelector(`#${elId}`);
+    // selectedElement && selectedElement.classList.add('selectedSvgElement');
 
   }
 
-  const rulesArray = [
-    {
-      inputId: "ruleInputStrokeWidth",
-      inputLabel: "Stroke Width",
-      valueType: "number",
-      rule: "stroke-width",
-      inputToggle: "ruleToggleStrokeWidth"
-    },
-    {
-      inputId: "ruleInputStrokeColor",
-      inputLabel: "Stroke Color",
-      valueType: "color",
-      rule: "stroke",
-      inputToggle: "ruleToggleStrokeColor"
-    },
-    {
-      inputId: "ruleInputOpacity",
-      inputLabel: "Opacity",
-      valueType: "number",
-      otherProps: { min: 0, max: 1, step: 0.1 },
-      rule: "opacity",
-      inputToggle: "ruleToggleOpacity"
-    },
-    {
-      rule: "transform",
-      label: "Transform",
-      inputs: [
-        {
-          inputId: "ruleInputTranslateX",
-          inputLabel: "Translate X (px)",
-          valueType: "number",
-          rule: "translateX",
-          inputToggle: "ruleToggleTranslateX"
-        },
-        {
-          inputId: "ruleInputTranslateY",
-          inputLabel: "Translate Y (px)",
-          valueType: "number",
-          rule: "translateY",
-          inputToggle: "ruleToggleTranslateY"
-        },
-        {
-          inputId: "ruleInputRotate",
-          inputLabel: "Rotate (deg)",
-          valueType: "number",
-          rule: "rotate",
-          inputToggle: "ruleToggleRotate"
-        }
-      ]
-    }
-  ];
   
 
   async function changeRules() {
-    // console.log('svgControllers: ', svgControllers);
-
     const currentElId = selectedElRef.current;
-    const controller = currentElId ? svgControllersRef.current[currentElId] : null;
-
-    console.log(
-      'currentElId: ',
-      currentElId,
-      'controller: ',
-      controller
-    );
-
-    if (!currentElId || !controller) {
-      alert('No element selected or controller not ready.');
-      return;
-    }
-
-    
-    
-
-  const rulesToApply = {};
-
-  rulesArray.forEach((rule) => {
-    const input = document.getElementById(rule.inputId);
-    if (!input) return;
-
-    const value = input.value;
-    if (value !== '') rulesToApply[rule.rule] = value;
-  });
-  
-  
-  if (Object.keys(rulesToApply).length === 0) {
-    alert('No rules to apply. Please set at least one rule value.');
+  if (!currentElId) {
+    alert('No element selected.');
     return;
   }
-  
-  
-  const liveEl = document.querySelector(`#svgView #${CSS.escape(currentElId)}`);
-  controller.changeCssRules(liveEl, rulesToApply);
+
+  const rulesToApply = Object.fromEntries(
+    Object.entries(ruleState)
+      .filter(([, config]) => config.enabled && config.value !== '')
+      .map(([ruleName, config]) => [ruleName, config.value])
+  );
+
+  if (Object.keys(rulesToApply).length === 0) {
+    alert('No rules to apply.');
+    return;
+  }
+
+  setStylesByElementId(prev => ({
+    ...prev,
+    [currentElId]: {
+      ...(prev[currentElId] || {}),
+      ...rulesToApply
+    }
+  }));
 
 }
 function handlePlay() {
@@ -224,6 +235,7 @@ function handlePlay() {
 }
 
 function toggleStyle(id) {
+  // this function goes through the array of rules and toggles the enabled property of the rule with the given id. It then updates the state with the new array of rules.
   const updated = svgStyles.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r);
   setSvgStyles(updated);
 
@@ -241,9 +253,6 @@ function toggleStyle(id) {
 async function handleFileChange(event) {
   const svgView = document.getElementById('svgView');
   // this will check the uploaded file and first see if it is a SVG. If it isn't, it will alert the user that the file is not a SVG and end the execution. If it is a SVG, it will alert the user that the file has been changed.
-
-  // reset controllers  before rebuilding controllers
-  svgControllersRef.current = {};
 
   const file = event.target.files[0];
   if (file && file.type === 'image/svg+xml') {
@@ -278,7 +287,7 @@ async function handleFileChange(event) {
     let svgStructureArray = [];
 
     Array.from(svgParsed.querySelectorAll('svg > *')).forEach(element => {
-      svgStructureArray.push(traverseElements(element, registerSvgController));
+      svgStructureArray.push(traverseElements(element));
 
       // These IFs are just to get the groups and elements arrays, which may be used for the groups and elements
       if (element.tagName === 'g') { // Groups are <g> tags
@@ -330,8 +339,36 @@ async function handleFileChange(event) {
 
     return false;
   }
+
+    console.log('Styles after reading: ', svgStyles);
+  svgStyles.forEach(rule => {
+              console.log('rule:', rule, 'rule.id: ', rule.id);
+  });
+
   reader.readAsText(file);
 }
+
+useEffect(() => {
+  applyStylesToDom(stylesByElementId);
+}, [stylesByElementId, svgDoc]);
+
+useEffect(() => {
+  // highlight selected element
+  const svgView = document.getElementById('svgView');
+  svgView?.querySelectorAll('.selectedSvgElement').forEach(el => el.classList.remove('selectedSvgElement'));
+  const el = svgView?.querySelector(`#${CSS.escape(selectedEl)}`);
+  el?.classList.add('selectedSvgElement');
+}, [selectedEl, svgDoc]);
+
+useEffect(() => {
+  // rewrite style tags from svgStyles state
+  const svgView = document.getElementById('svgView');
+  svgView?.querySelectorAll('style').forEach((styleEl, sheetIdx) => {
+    const sheetRules = svgStyles.filter(r => r.sheetIdx === sheetIdx && r.enabled);
+    styleEl.innerHTML = sheetRules.map(r => r.cssText).join('\n');
+  });
+}, [svgStyles, svgDoc]);
+
 
 return (
   <>
@@ -362,7 +399,7 @@ return (
           Properties List
           <button id="playBtn" onClick={handlePlay}>Play</button>
 
-          {rulesArray.map(rule => (
+          {RULES_CONFIG.map(rule => (
             rule.rule === 'transform' ? (
               <div key={rule.rule} className="ruleBox transformRuleGroup">
                 <span className="ruleGroupLabel">{rule.label}</span>
@@ -401,6 +438,9 @@ return (
             ))}
           </ul>
         </div>
+      </div>
+      <div className="timelineContainer">
+            <input type="range" min="0" max="100" value={currentFrame} onChange={(e) => setCurrentFrame(parseInt(e.target.value))} />
       </div>
       {/* <div id="timelineContainer">
           Timeline Container

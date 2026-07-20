@@ -85,7 +85,7 @@ class svgElementController {
 }
 let elCounter = 0;
 
-function traverseElements(element, registerSvgController) {
+function traverseElements(element) {
     const elementData = {
         tag: element.tagName,
         id: element.id ? element.id : `el_${element.tagName.toLowerCase()}_${elCounter++}`,
@@ -100,12 +100,8 @@ function traverseElements(element, registerSvgController) {
     }
 
     for (const child of Array.from(element.children)) {
-        elementData.children.push(traverseElements(child, registerSvgController));
+        elementData.children.push(traverseElements(child));
     }
-
-    const myController = new svgElementController(elementData.id);
-    myController.init();
-    registerSvgController(elementData.id, myController);
 
     return elementData;
 }
